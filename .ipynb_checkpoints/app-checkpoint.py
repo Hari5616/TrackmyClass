@@ -3,7 +3,8 @@ from bson.objectid import ObjectId
 from bson.json_util import dumps
 import os 
 import json
-from datetime import datetime
+from datetime import datetime,date
+import datetime
 import hashlib
 import datetime
 
@@ -16,41 +17,96 @@ def hash(classified):
     binary_classified = classified.encode('utf-8')
     hasher.update(binary_classified)
     return hasher.hexdigest()
-        
-def show_events(_id):
+
+def show_events_day(_id):
+    date = date.today() 
+    today = datetime.combine(date , datetime.time()) 
+    tomorrow = today + datetimie.timedelta(days = 1)
+    def check_if_removed(event,eventstoberemoved):
+        if event in eventstoberemoved :
+            for x in eventstoberemoved :
+                if event['weekday'] == x['time_start'].weekday():
+                    return 0
+                return 1
+        else:
+            return 1
     user = db.users.find_one({'_id':_id})
+    events = []
+    for group in user['groups']: 
+        group_info = db.groups.find_one({ 'groupname' : group })
+        for event in group_info['events']['temp']:
+            if event['time_start'] > today and event['time_start'] < tommorow:
+                events.append(event)
+        for event in group_info['events']['perm']:
+            event['time_start'] = combine(date , event['time_start'])
+            event['time_end'] = combine(date , event['time_end'])
+            if event['time_start'] > today and event['time_start'] < tommorow and check_if_removed(event,group_info['events']['remove']):
+                events.append(event)
+    events = sorted(events, key = lambda x : x['time_start'].timestamp())
+    for event in events:
+        print(event)
+    
+
 
 def edit_groups(_id):
     user = db.users.find_one({'_id':_id})
     while 1 :
         x = int(input("Enter 1 to add group or 2 to remove :"))
         group = input("Enter the groupname of group you want to add or remove or 'exit' to stop editing :")
-            if group == 'exit':
-                break
-            else:
-                if x == 1 :
-                    user['groups'].append(group)
-                if x == 2 :
-                    try : 
-                        user['groups'].remove(group)
-                        print('Group removed succesfully')
-                    except :
-                        print('You were not a member of that to begin with :')
-    printf('You are in the following groups :',user['groups'])
+        if group == 'exit':
+            break
+        else:
+            if x == 1 :
+                user['groups'].append(group)
+            if x == 2 :
+                try : 
+                    user['groups'].remove(group)
+                    print('Group removed succesfully.')
+                except :
+                    print('You were not a member of that to begin with :')
+    print('You are in the following groups :',user['groups'])
                 
-
-def add_event(_id):
+def add_permevent(_id):
     user = db.user.find_one({'_id':_id})
-    while 1 :
+    while 1:
         group = input("Enter the groupname of the group for which you want to add the event or 'exit' to stop :")
-        if group = 'exit' :
+        if group == 'exit' :
             break
         if group in user['groups']:
-            group_info = db.groups.find_one({'groupname' : groups})
+            group_info = db.groups.find_one({'groupname' : group })
             if group_info == None :
                 print("No such group exists, please try again .")
                 continue
-            name = input('Enter the name of the event you want to enter :')
+            name = input('Enter the name of the event you want to add :')
+            hour = input("Enter the starting hour of the event in 24 hour format (0-23)")
+            minute = input("Enter the starting minutes of the event (0-59)")
+            time_start = datetime.time(hour , minute , 0)
+            hour = input("Enter the ending hour of the event in 24 hour format (0-23)")
+            minute = input("Enter the ending minutes of the event (0-59)")
+            time_end = datetime.time(hour , minute , 0)
+            event = {
+                'name' : name ,
+                'time_start' : time_start ,
+                'time_end' : time_end ,
+                'weekday' : weekday
+            }
+            group_info['events']['perm']append(event)
+        else :
+            print('You are not in that group, please try again')
+        db.groups.replaceOne({ 'groupname' : group },group_info)
+
+def remove_permevent(_id):
+    user = db.user.find_one({'_id':_id})
+    while 1 :
+        group = input("Enter the groupname of the group for which you want to rempve the event or 'exit' to stop :")
+        if group == 'exit' :
+            break
+        if group in user['groups']:
+            group_info = db.groups.find_one({'groupname' : group })
+            if group_info == None :
+                print("No such group exists, please try again .")
+                continue
+            name = input('Enter the name of the event you want to remove :')
             time_start = input("Enter the starting date and time of the event in following format using only digits (<date> <month> <year(YYYY)> - <hour> <minutes>) :")
             time_end = input("Enter the ending date and time of the event in following format using only digits (<date> <month> <year(YYYY)> - <hour(24 hour format)> <minutes>) :")
             time_start = datetime.strptime(time_start,"%d %m %Y - %H %M")
@@ -60,22 +116,23 @@ def add_event(_id):
                 'time_start' : time_start ,
                 'time_end' : time_end
             }
-            group_info['events'].append(event)
+            group_info['events']['remove'].append(event)
         else :
             print('You are not in that group, please try again')
-            
-def remove_event(_id):
+        db.groups.replaceOne({ 'groupname' : group },group_info)
+
+def add_tempevent(_id):
     user = db.user.find_one({'_id':_id})
     while 1 :
-        group = input("Enter the groupname of the group for which you want to remove the event or 'exit' to stop :")
-        if group = 'exit' :
+        group = input("Enter the groupname of the group for which you want to add the event or 'exit' to stop :")
+        if group == 'exit' :
             break
         if group in user['groups']:
-            group_info = db.groups.find_one({'groupname' : groups})
+            group_info = db.groups.find_one({'groupname' : group })
             if group_info == None :
                 print("No such group exists, please try again .")
                 continue
-            name = input('Enter the name of the event you want to enter :')
+            name = input('Enter the name of the event you want to remove :')
             time_start = input("Enter the starting date and time of the event in following format using only digits (<date> <month> <year(YYYY)> - <hour> <minutes>) :")
             time_end = input("Enter the ending date and time of the event in following format using only digits (<date> <month> <year(YYYY)> - <hour(24 hour format)> <minutes>) :")
             time_start = datetime.strptime(time_start,"%d %m %Y - %H %M")
@@ -86,11 +143,41 @@ def remove_event(_id):
                 'time_end' : time_end
             }
             try :
-                group_info['events'].remove(event)
+                group_info['events']['temp'].append(event)
             except :
                 print('No such event found, please try again.')
         else :
             print('You are not in that group, please try again')
+        db.groups.replaceOne({ 'groupname' : group },group_info)
+
+def remove_tempevent(_id):
+    user = db.user.find_one({'_id':_id})
+    while 1 :
+        group = input("Enter the groupname of the group for which you want to remove the event or 'exit' to stop :")
+        if group == 'exit' :
+            break
+        if group in user['groups']:
+            group_info = db.groups.find_one({'groupname' : group })
+            if group_info == None :
+                print("No such group exists, please try again .")
+                continue
+            name = input('Enter the name of the event you want to remove :')
+            time_start = input("Enter the starting date and time of the event in following format using only digits (<date> <month> <year(YYYY)> - <hour> <minutes>) :")
+            time_end = input("Enter the ending date and time of the event in following format using only digits (<date> <month> <year(YYYY)> - <hour(24 hour format)> <minutes>) :")
+            time_start = datetime.strptime(time_start,"%d %m %Y - %H %M")
+            time_end = datetime.strptime(time_end,"%d %m %Y - %H %M")
+            event = {
+                'name' : name ,
+                'time_start' : time_start ,
+                'time_end' : time_end
+            }
+            try :
+                group_info['events']['temp'].remove(event)
+            except :
+                print('No such event found, please try again.')
+        else :
+            print('You are not in that group, please try again')
+        db.groups.replaceOne({ 'groupname' : group },group_info)
 
 def dashboard_student(_id):
     pass
@@ -150,5 +237,5 @@ def loginsignup():
             else :
                 print("The username is taken. \nPlease try again..")
 
-loginsignup()
+
 
