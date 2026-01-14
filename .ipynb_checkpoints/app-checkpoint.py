@@ -6,28 +6,27 @@ import json
 from datetime import datetime,date
 import datetime
 import hashlib
-import datetime
 
 MONGODB_URI = 'mongodb+srv://Pubzeee1311:12345@30daysofpython.xpenqyh.mongodb.net/'
 client = pymongo.MongoClient(MONGODB_URI)
 db = client['TrackmyClass']
 
-def hash(classified):
+def hash_pass(classified):
     hasher = hashlib.sha256()
     binary_classified = classified.encode('utf-8')
     hasher.update(binary_classified)
     return hasher.hexdigest()
 
 def show_events_day(_id):
-    date = date.today() 
-    today = datetime.combine(date , datetime.time()) 
-    tomorrow = today + datetimie.timedelta(days = 1)
+    today_date = date.today() 
+    today = datetime.combine(today_date , datetime.time()) 
+    tomorrow = today + datetime.timedelta(days = 1)
     def check_if_removed(event,eventstoberemoved):
         if event in eventstoberemoved :
             for x in eventstoberemoved :
                 if event['weekday'] == x['time_start'].weekday():
                     return 0
-                return 1
+            return 1
         else:
             return 1
     user = db.users.find_one({'_id':_id})
@@ -35,12 +34,12 @@ def show_events_day(_id):
     for group in user['groups']: 
         group_info = db.groups.find_one({ 'groupname' : group })
         for event in group_info['events']['temp']:
-            if event['time_start'] > today and event['time_start'] < tommorow:
+            if event['time_start'] > today and event['time_start'] < tomorrow:
                 events.append(event)
         for event in group_info['events']['perm']:
-            event['time_start'] = combine(date , event['time_start'])
-            event['time_end'] = combine(date , event['time_end'])
-            if event['time_start'] > today and event['time_start'] < tommorow and check_if_removed(event,group_info['events']['remove']):
+            event['time_start'] = datetime.combine(today_date , event['time_start'])
+            event['time_end'] = datetime.combine(today_date , event['time_end'])
+            if event['time_start'] > today and event['time_start'] < tomorrow and check_if_removed(event,group_info['events']['remove']) and event['weekday'] == today.weekday():
                 events.append(event)
     events = sorted(events, key = lambda x : x['time_start'].timestamp())
     for event in events:
@@ -84,13 +83,14 @@ def add_permevent(_id):
             hour = input("Enter the ending hour of the event in 24 hour format (0-23)")
             minute = input("Enter the ending minutes of the event (0-59)")
             time_end = datetime.time(hour , minute , 0)
+            weekday = int(input("Enter the weekday of the event (0 for Monday , 6 for Sunday) :"))
             event = {
                 'name' : name ,
                 'time_start' : time_start ,
                 'time_end' : time_end ,
                 'weekday' : weekday
             }
-            group_info['events']['perm']append(event)
+            group_info['events']['perm'].append(event)
         else :
             print('You are not in that group, please try again')
         db.groups.replaceOne({ 'groupname' : group },group_info)
@@ -207,7 +207,7 @@ def loginsignup():
             b = int(input("Enter how do you want to login :\n0 for Student..\n1 for CR..\n1 for Admin..\n"))
             username = input("Enter Username:")
             password = input("Enter Password:")
-            password = hash(password)
+            password = hash_pass(password)
             user = db.users.find_one({"username" : username , "role" : roles[b] , "password" : password })
             if user == None :
                 print("No such credentials found ...\nPlease try again.")
@@ -222,7 +222,7 @@ def loginsignup():
             print("You are signing up as a student :")
             username = input("Enter Username:")
             password = input("Enter Password:")
-            password = hash(password)
+            password = hash_pass(password)
             temp = db.students.find_one({"username" : username , "role" : "Student"})
             if temp == None :
                 student = {
