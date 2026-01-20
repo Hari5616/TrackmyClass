@@ -1,4 +1,4 @@
-from connection import get_collection
+from database.connection import get_collection
 
 #arguent are collection_name and the document we want to insert, return the inserted_id
 def insert_one(collection_name,document):
@@ -30,23 +30,13 @@ def find(collection_name,query):
 #Update one document in collection, arguements are collection_name,query,update_name
 def update_one(collection_name,query,update_value):
     collection=get_collection(collection_name)
-    return collection.update_one(query,update_value)
+    result= collection.update_one(query,update_value)
+    return result.modified_count
     
 
 #Delete one document from collection,collection_name,query
 def delete_one(collection_name,query):
     collection=get_collection(collection_name)
-    return collection.delete_one(query)
+    result=collection.delete_one(query)
+    return result.deleted_count
 
-
-sample_student = {
-    "roll_no": "2026CS101",
-    "name": "Rahul Kumar",
-    "branch": "CSE",
-    "year": 1,
-    "email": "rahul.k@iiits.in",
-    "subjects": ["C Programming", "Digital Logic", "Math"],
-    "is_active": True
-}
-
-print(insert_one('students',sample_student))
