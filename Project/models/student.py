@@ -14,7 +14,7 @@ def  get_student_courses(student_id):
     student_enrollment=find('enrollments',{'student_id':student_id})
     course_detail=[]
     for enrollment in student_enrollment:
-        course=find_one('courses',enrollment['course_id'])
+        course=find_one('courses',{'course_id':enrollment['course_id']})
         course.pop('_id',None)
         course_detail.append(course)
     return course_detail

@@ -20,7 +20,7 @@ def find_one(collection_name,query):
     
 
 #Find multiple documents in collection , collection_name,query (something is there , we need to list it)
-def find(collection_name,query):
+def find(collection_name,query=None):
     collection=get_collection(collection_name)
     if query is None:
         query={}
